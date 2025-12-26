@@ -19,7 +19,7 @@ exports.getItems = async (req, res) => {
 exports.claimItem = async (req, res) => {
   const { itemId } = req.body;
 
-  const item = await Item.findById(itemId);
+  const item = await Item.findById(itemId).populate("postedBy", "name email");
   if (!item) {
     return res.status(404).json({ message: "Item not found" });
   }
@@ -30,8 +30,16 @@ exports.claimItem = async (req, res) => {
 
   await item.save();
 
-  res.json({ message: "Item claimed successfully" });
+  res.json({
+    message: "Item claimed successfully",
+    reporter: {
+      name: item.postedBy.name,
+      email: item.postedBy.email,
+      contactInfo: item.contactInfo
+    }
+  });
 };
+
 
 
 exports.getClaimedItems = async (req, res) => {
@@ -39,4 +47,10 @@ exports.getClaimedItems = async (req, res) => {
     .populate("claimedBy", "name email");
 
   res.json(items);
+};
+
+exports.deleteItem = async (req, res) => {
+  const { id } = req.params;
+  await Item.findByIdAndDelete(id);
+  res.json({ message: "Item removed successfully" });
 };

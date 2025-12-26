@@ -1,145 +1,96 @@
 const API = "http://localhost:5000/api";
 const token = localStorage.getItem("token");
 
-// 🔒 Redirect if not logged in
-if (!token) {
-  window.location.href = "index.html";
-}
+if (!token) window.location.href = "index.html";
 
-/* =========================
-   LOGOUT
-========================= */
+/* LOGOUT */
 function logout() {
   localStorage.removeItem("token");
   window.location.href = "index.html";
 }
 
-/* =========================
-   TOAST NOTIFICATION
-========================= */
+/* TOAST */
 function showToast(message, success = true) {
   const toast = document.getElementById("toast");
   toast.innerText = message;
-  toast.style.zIndex=10;
   toast.className = `toast show ${success ? "success" : "error"}`;
-
-  setTimeout(() => {
-    toast.className = "toast";
-  }, 3000);
+  setTimeout(() => toast.className = "toast", 3000);
 }
 
-/* =========================
-   LOAD UNCLAIMED ITEMS
-========================= */
+/* LOAD ITEMS */
 async function loadItems() {
-  try {
-    const category = document.getElementById("category").value;
-    const url = category
-      ? `${API}/items/all?category=${category}`
-      : `${API}/items/all`;
+  const category = document.getElementById("category").value;
+  const url = category ? `${API}/items/all?category=${category}` : `${API}/items/all`;
 
-    const res = await fetch(url);
-    const allItems = await res.json();
+  const res = await fetch(url);
+  const allItems = await res.json();
 
-    // 👉 show ONLY unclaimed items
-    const items = allItems.filter(item => !item.claimed);
+  const items = allItems.filter(i => !i.claimed);
+  const container = document.getElementById("items");
+  container.innerHTML = "";
 
-    const container = document.getElementById("items");
-    container.innerHTML = "";
-
-    if (items.length === 0) {
-      container.innerHTML = "<p>No items available</p>";
-      return;
-    }
-
-    items.forEach((item, index) => {
-      container.innerHTML += `
-        <div class="item-card" id="card-${item._id}" data-aos="fade-up">
-          <h4>${item.itemName}</h4>
-
-          <p class="desc">${item.description}</p>
-
-          <span class="badge">${item.category}</span>
-
-          <button onclick="claimItem('${item._id}', 'card-${item._id}')">
-            Claim
-          </button>
-        </div>
-      `;
-    });
-
-  } catch (err) {
-    console.error(err);
-    showToast("Failed to load items", false);
-  }
+  items.forEach(item => {
+    container.innerHTML += `
+      <div class="item-card" id="card-${item._id}" data-aos="fade-up">
+        <h4>${item.itemName}</h4>
+        <p class="desc">${item.description}</p>
+        <span class="badge ${item.category}">${item.category}</span>
+        <button onclick="claimItem('${item._id}', 'card-${item._id}')">
+          Claim
+        </button>
+      </div>
+    `;
+  });
 }
 
-/* =========================
-   POST NEW ITEM
-========================= */
+/* POST ITEM */
 async function postItem() {
-  try {
-    const body = {
-      itemName: document.getElementById("itemName").value,
-      location: document.getElementById("location").value,
-      category: document.getElementById("itemCategory").value,
-      description: document.getElementById("description").value,
-      contactInfo: document.getElementById("contactInfo").value
-    };
+  await fetch(`${API}/items/post`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": token
+    },
+    body: JSON.stringify({
+      itemName: itemName.value,
+      location: location.value,
+      category: itemCategory.value,
+      description: description.value,
+      contactInfo: contactInfo.value
+    })
+  });
 
-    await fetch(`${API}/items/post`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": token
-      },
-      body: JSON.stringify(body)
-    });
-
-    showToast("Item posted successfully 🎉");
-    loadItems();
-
-  } catch (err) {
-    console.error(err);
-    showToast("Failed to post item", false);
-  }
+  showToast("Item posted successfully 🎉");
+  loadItems();
 }
 
-/* =========================
-   CLAIM ITEM (CORE LOGIC)
-========================= */
+/* CLAIM ITEM + SHOW REPORTER DETAILS */
 async function claimItem(itemId, cardId) {
-  try {
-    await fetch(`${API}/items/claim`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": token
-      },
-      body: JSON.stringify({ itemId })
-    });
+  const res = await fetch(`${API}/items/claim`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": token
+    },
+    body: JSON.stringify({ itemId })
+  });
 
-    showToast("Item claimed successfully ✅");
+  const data = await res.json();
 
-    // 🔥 remove item from dashboard
-    const card = document.getElementById(cardId);
-    if (card) card.remove();
+  document.getElementById("contactText").innerHTML = `
+    <b>${data.reporter.name}</b><br>
+    ${data.reporter.email}<br>
+    ${data.reporter.contactInfo}
+  `;
 
-  } catch (err) {
-    console.error(err);
-    showToast("Failed to claim item", false);
-  }
+  document.getElementById("claimModal").style.display = "flex";
+
+  document.getElementById(cardId).remove();
 }
 
-/* =========================
-   MODAL CLOSE (if used)
-========================= */
+/* MODAL CLOSE */
 function closeModal() {
-  const modal = document.getElementById("claimModal");
-  if (modal) modal.style.display = "none";
+  document.getElementById("claimModal").style.display = "none";
 }
 
-/* =========================
-   INITIAL LOAD
-========================= */
 loadItems();
