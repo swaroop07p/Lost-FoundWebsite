@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Lost & Found Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css" />
+  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
+</head>
+<body>
+
+<header>
+  <h1>📦 Lost & Found Portal</h1>
+
+  <div class="header-actions">
+    <select id="category" onchange="loadItems()">
+      <option value="">All</option>
+      <option value="Electronics">Electronics</option>
+      <option value="Documents">Documents</option>
+      <option value="Others">Others</option>
+    </select>
+
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </div>
+  <button onclick="window.location.href='claimed.html'">
+  Claimed Items
+</button>
+
+</header>
+<div id="toast" class="toast"></div>
+<div id="claimModal" class="modal" onclick="closeModal()">
+  
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <h3>📞 Contact Finder</h3>
+    <p id="contactText"></p>
+    <button onclick="closeModal()">Close</button>
+  </div>
+
+</div>
+
+<section class="post-form">
+  <h3>Post Found Item</h3>
+  <input id="itemName" placeholder="Item Name" />
+  <input id="location" placeholder="Location Found" />
+  <select id="itemCategory">
+    <option>Electronics</option>
+    <option>Documents</option>
+    <option>Others</option>
+  </select>
+  <textarea id="description" placeholder="Description"></textarea>
+  <input id="contactInfo" placeholder="Contact Info" />
+  <button onclick="postItem()">Post Item</button>
+</section>
+
+<section id="items" class="items-grid"></section>
+
+<script src="js/dashboard.js"></script>
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+  AOS.init({ duration: 800, once: true });
+</script>
+
+</body>
+</html>
